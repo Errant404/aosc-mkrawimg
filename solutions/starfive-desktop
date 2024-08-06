@@ -1,0 +1,78 @@
+#!/bin/bash
+IMAGE_TOTAL_SIZE=7680
+
+THIRD_PARTITION_TYPE=vfat
+FOURTH_PARTITION_TYPE=ext4
+
+DEPENDENCIES="uboot-tools wget gptfdisk"
+
+function GDISK_COMMANDS() {
+    cat <<-EOF | sfdisk "$1"
+	label: gpt
+	unit: sectors
+	sector-size: 512
+	part1: start=4096,  size=4096,   type=2E54B353-1271-4842-806F-E436D6AF6985, name=spl
+	part2: start=8192,  size=8192,   type=5B193300-FC78-40CD-8002-E86C45580B47, name=uboot
+    part3: start=16384, size=204800, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name=efi
+	part4: start=221184,             type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name=root
+	EOF
+    sync
+}
+
+# if [ ! "$MMC" ] || [ "$MMC" = "0" ]; then
+# 	MMC=0 # SD Card
+# 	UBOOT_MMC=1
+# 	IMAGE_NAME_EXTRA="_sd"
+# elif [ "$MMC" = "1" ]; then
+# 	UBOOT_MMC=0
+# 	IMAGE_NAME_EXTRA="_emmc"
+# else
+# 	echo "Wrong MMC variable"
+# 	exit 1
+# fi
+
+# Note: needs a TARBALL environment variable
+
+do_fill_image() {
+	pushd p4
+		echo "Unpacking system distribution ..."
+		tar xfpa "${TARBALL}" --strip-components=1
+
+		# echo "Generating aosc-arm.conf ..."
+		# mkdir -p etc/
+# 		echo "/dev/mmcblk${MMC}p3 / btrfs compress=zstd,ssd 1 1" >> etc/fstab
+# 		echo "DEVICE_NAME=$DEVICE_NAME" > etc/aosc-arm.conf
+# 		echo "FLASHER_SOLUTION=rockchip" >> etc/aosc-arm.conf
+# 		echo "RK_FIRMWARE_DEVICE=/dev/mmcblk${MMC}" >> etc/aosc-arm.conf
+# 		echo "RK_KERNEL_DEVICE=/dev/mmcblk${MMC}p3" >> etc/aosc-arm.conf
+
+# 		# For u-boot-aosc-utils
+# 		echo "Downloading u-boot configurations ..."
+# 		mkdir -p etc/default
+# 		if [ "$MMC" = "1" ]; then
+# 			wget https://github.com/AOSC-Dev/u-boot-aosc-utils/raw/584ede55ce34300d2b3cb4adb587e87bc28e0aff/presets/rk64-emmc -O etc/default/u-boot
+# 		else
+# 			wget https://github.com/AOSC-Dev/u-boot-aosc-utils/raw/584ede55ce34300d2b3cb4adb587e87bc28e0aff/presets/rk64-sd -O etc/default/u-boot
+# 		fi
+# 	popd
+# 	pushd p3
+# 		echo "Deploying Kernel image ..."
+# 		cp -v ../p4/usr/lib/aosc-os-arm64-rockchip-boot/linux-kernel-rk64/Image .
+# 		cp -v ../p4/usr/lib/aosc-os-arm64-rockchip-boot/dtb-${DEVICE_NAME}/dtb.dtb .
+
+# 		echo "Generating boot.cmd ..."
+# 		cat > boot.cmd << EOF
+# load mmc ${UBOOT_MMC}:3 0x02080000 Image
+# load mmc ${UBOOT_MMC}:3 0x01f00000 dtb.dtb
+# setenv bootargs console=ttyS2,1500000 console=tty0 root=/dev/mmcblk${MMC}p4 rootwait earlyprintk panic=10
+# booti 0x02080000 - 0x01f00000
+# EOF
+
+# 		echo "Generating boot.scr ..."
+# 		mkimage -C none -A arm -T script -d boot.cmd boot.scr
+# 	popd
+
+# 	echo "Writing boot partitions ..."
+# 	dd if=p4/usr/lib/aosc-os-arm64-rockchip-boot/u-boot-${DEVICE_NAME}/idbloader.img of="${IMAGE_DEVICE}" bs=512 seek=64
+# 	dd if=p4/usr/lib/aosc-os-arm64-rockchip-boot/u-boot-${DEVICE_NAME}/u-boot.itb of="${IMAGE_DEVICE}" bs=512 seek=16384
+}
